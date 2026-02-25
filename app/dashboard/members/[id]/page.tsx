@@ -1,0 +1,98 @@
+import DeleteMemberButton from "@/components/DeleteMemberButton";
+import MemberDetailContent from "@/components/MemberDetailContent";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function MemberDetailPage({ params }: PageProps) {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { id } = await params;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  // Check role
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const isAdmin = profile?.role === "admin";
+
+  // Fetch Person Public Data
+  const { data: person, error } = await supabase
+    .from("persons")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !person) {
+    notFound();
+  }
+
+  // Fetch Private Data if Admin
+  let privateData = null;
+  if (isAdmin) {
+    const { data } = await supabase
+      .from("person_details_private")
+      .select("*")
+      .eq("person_id", id)
+      .single();
+    privateData = data;
+  }
+
+  return (
+    <div className="min-h-screen bg-stone-50 flex flex-col relative overflow-hidden">
+      {/* Decorative background blurs */}
+      <div className="absolute -top-[20%] -left-[10%] w-[500px] h-[500px] bg-amber-200/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-[40%] -right-[10%] w-[400px] h-[400px] bg-stone-300/20 rounded-full blur-[100px] pointer-events-none" />
+
+      <header className="sticky top-0 z-30 bg-white/60 backdrop-blur-md border-b border-stone-200/60 shadow-sm transition-all duration-200">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <Link
+            href="/dashboard"
+            className="group flex items-center text-stone-500 hover:text-amber-700 font-medium text-sm transition-colors"
+          >
+            <span className="mr-1 group-hover:-translate-x-1 transition-transform">
+              ←
+            </span>
+            Quay lại
+          </Link>
+          {isAdmin && (
+            <div className="flex items-center gap-2.5">
+              <Link
+                href={`/dashboard/members/${id}/edit`}
+                className="px-4 py-2 bg-stone-100/80 text-stone-700 rounded-lg hover:bg-stone-200 hover:text-stone-900 font-medium text-sm transition-all shadow-sm"
+              >
+                Chỉnh sửa
+              </Link>
+              <DeleteMemberButton memberId={id} />
+            </div>
+          )}
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative z-10 w-full">
+        <div className="bg-white/60 backdrop-blur-md rounded-2xl shadow-sm border border-stone-200/60 overflow-hidden hover:shadow-md transition-shadow duration-300">
+          <MemberDetailContent
+            person={person}
+            privateData={privateData}
+            isAdmin={isAdmin}
+          />
+        </div>
+      </main>
+    </div>
+  );
+}
