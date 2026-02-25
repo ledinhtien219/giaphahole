@@ -1,0 +1,365 @@
+"use client";
+
+import {
+  adminCreateUser,
+  changeUserRole,
+  deleteUser,
+  toggleUserStatus,
+} from "@/app/actions/user";
+import { AdminUserData, UserRole } from "@/types";
+import { useState } from "react";
+
+interface AdminUserListProps {
+  initialUsers: AdminUserData[];
+  currentUserId: string;
+}
+
+export default function AdminUserList({
+  initialUsers,
+  currentUserId,
+}: AdminUserListProps) {
+  const [users, setUsers] = useState<AdminUserData[]>(initialUsers);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    try {
+      setLoadingId(userId);
+      await changeUserRole(userId, newRole);
+      setUsers(
+        users.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
+      );
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        alert("Lỗi khi đổi quyền: " + error.message);
+      } else {
+        alert("Lỗi không xác định khi đổi quyền");
+      }
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleStatusChange = async (userId: string, newStatus: boolean) => {
+    try {
+      setLoadingId(userId);
+      await toggleUserStatus(userId, newStatus);
+      setUsers(
+        users.map((u) =>
+          u.id === userId ? { ...u, is_active: newStatus } : u,
+        ),
+      );
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        alert("Lỗi khi đổi trạng thái: " + error.message);
+      } else {
+        alert("Lỗi không xác định khi đổi trạng thái");
+      }
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleDelete = async (userId: string) => {
+    if (
+      !confirm(
+        "Bạn có chắc chắn muốn xóa user này khỏi hệ thống vĩnh viễn không?",
+      )
+    )
+      return;
+    try {
+      setLoadingId(userId);
+      await deleteUser(userId);
+      setUsers(users.filter((u) => u.id !== userId));
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        alert("Lỗi khi xoá user: " + error.message);
+      } else {
+        alert("Lỗi không xác định khi xoá user");
+      }
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsCreating(true);
+    const formData = new FormData(e.currentTarget);
+    try {
+      await adminCreateUser(formData);
+      alert("Tạo người dùng thành công! Họ có thể đăng nhập ngay bây giờ.");
+      setIsCreateModalOpen(false);
+      // Let Server Action revalidate and refresh the page next time,
+      // or we can just reload the page to get the new list.
+      window.location.reload();
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        alert("Lỗi khi tạo user: " + error.message);
+      } else {
+        alert("Lỗi không xác định khi tạo user");
+      }
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-end">
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-5 py-2.5 rounded-xl transition-all duration-300 font-medium text-sm shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer flex items-center gap-2"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          Thêm người dùng
+        </button>
+      </div>
+
+      <div className="bg-white/60 backdrop-blur-xl rounded-2xl shadow-sm border border-stone-200/60 overflow-hidden">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <thead className="uppercase tracking-wider border-b border-stone-200/60 bg-stone-50/50">
+              <tr>
+                <th className="px-6 py-4 text-stone-500 font-semibold text-xs">
+                  Email
+                </th>
+                <th className="px-6 py-4 text-stone-500 font-semibold text-xs">
+                  Vai trò
+                </th>
+                <th className="px-6 py-4 text-stone-500 font-semibold text-xs">
+                  Trạng thái
+                </th>
+                <th className="px-6 py-4 text-stone-500 font-semibold text-xs">
+                  Ngày tạo
+                </th>
+                <th className="px-6 py-4 text-stone-500 font-semibold text-xs text-right">
+                  Thao tác
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-stone-100">
+              {users.map((user) => (
+                <tr
+                  key={user.id}
+                  className="hover:bg-stone-50/80 transition-colors"
+                >
+                  <td className="px-6 py-4 font-medium text-stone-900">
+                    {user.email}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                        user.role === "admin"
+                          ? "bg-amber-100 text-amber-800 border border-amber-200"
+                          : "bg-stone-100 text-stone-600 border border-stone-200"
+                      }`}
+                    >
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                        user.is_active
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                          : "bg-red-100 text-red-800 border border-red-200"
+                      }`}
+                    >
+                      {user.is_active ? "Đã duyệt" : "Chờ duyệt"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-stone-500">
+                    {new Date(user.created_at).toLocaleDateString("vi-VN")}
+                  </td>
+                  <td className="px-6 py-4 text-right space-x-3">
+                    {user.id !== currentUserId && (
+                      <>
+                        {user.is_active ? (
+                          <button
+                            disabled={loadingId === user.id}
+                            onClick={() => handleStatusChange(user.id, false)}
+                            className="text-stone-600 hover:text-stone-900 font-medium disabled:opacity-50 cursor-pointer"
+                          >
+                            Khoá
+                          </button>
+                        ) : (
+                          <button
+                            disabled={loadingId === user.id}
+                            onClick={() => handleStatusChange(user.id, true)}
+                            className="text-emerald-600 hover:text-emerald-800 font-medium disabled:opacity-50 cursor-pointer"
+                          >
+                            Duyệt
+                          </button>
+                        )}
+
+                        {user.role === "admin" ? (
+                          <button
+                            disabled={loadingId === user.id}
+                            onClick={() => handleRoleChange(user.id, "member")}
+                            className="text-stone-600 hover:text-stone-900 font-medium disabled:opacity-50 cursor-pointer"
+                          >
+                            Hạ quyền
+                          </button>
+                        ) : (
+                          <button
+                            disabled={loadingId === user.id}
+                            onClick={() => handleRoleChange(user.id, "admin")}
+                            className="text-amber-600 hover:text-amber-800 font-medium disabled:opacity-50 cursor-pointer"
+                          >
+                            Lên Admin
+                          </button>
+                        )}
+
+                        <button
+                          disabled={loadingId === user.id}
+                          onClick={() => handleDelete(user.id)}
+                          className="text-red-600 hover:text-red-800 font-medium disabled:opacity-50 cursor-pointer"
+                        >
+                          Xóa
+                        </button>
+                      </>
+                    )}
+                    {user.id === currentUserId && (
+                      <span className="text-stone-400 italic text-xs">Bạn</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {users.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-6 py-8 text-center text-stone-500"
+                  >
+                    Không tìm thấy người dùng nào.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Create User Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-sm transition-opacity duration-300">
+          <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-stone-200/60 w-full max-w-md overflow-hidden transform transition-all">
+            <div className="px-6 py-5 border-b border-stone-100/80 flex justify-between items-center bg-stone-50/50">
+              <h3 className="text-xl font-serif font-bold text-stone-800">
+                Tạo Người Dùng Mới
+              </h3>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="text-stone-400 hover:text-stone-600 transition-colors cursor-pointer w-8 h-8 flex items-center justify-center hover:bg-stone-100 rounded-full"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUser} className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    className="w-full px-3 py-2 sm:py-2.5 bg-white text-stone-900 placeholder-stone-400 border border-stone-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+                    placeholder="email@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1">
+                    Mật khẩu <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    required
+                    minLength={6}
+                    className="w-full px-3 py-2 sm:py-2.5 bg-white text-stone-900 placeholder-stone-400 border border-stone-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+                    placeholder="Ít nhất 6 ký tự"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1">
+                    Vai trò
+                  </label>
+                  <select
+                    name="role"
+                    className="w-full px-3 py-2 sm:py-2.5 bg-white text-stone-900 placeholder-stone-400 border border-stone-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+                    defaultValue="member"
+                  >
+                    <option value="member">Thành viên (Member)</option>
+                    <option value="admin">Quản trị viên (Admin)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1">
+                    Trạng thái
+                  </label>
+                  <select
+                    name="is_active"
+                    className="w-full px-3 py-2 sm:py-2.5 bg-white text-stone-900 placeholder-stone-400 border border-stone-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+                    defaultValue="true"
+                  >
+                    <option value="true">Đã duyệt (Active)</option>
+                    <option value="false">Chờ duyệt (Pending)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreating}
+                  className="px-5 py-2.5 rounded-xl shadow-sm hover:shadow-md text-sm font-medium text-white bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all"
+                >
+                  {isCreating ? "Đang tạo..." : "Tạo người dùng"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

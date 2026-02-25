@@ -1,0 +1,167 @@
+"use client";
+
+import PersonCard from "@/components/PersonCard";
+import { Person } from "@/types";
+import { ArrowUpDown, Filter, Plus, Search } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+
+export default function DashboardMemberList({
+  initialPersons,
+}: {
+  initialPersons: Person[];
+}) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOption, setSortOption] = useState("birth_asc");
+
+  const [filterOption, setFilterOption] = useState("all");
+
+  const filteredPersons = initialPersons.filter((person) => {
+    const matchesSearch = person.full_name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+
+    let matchesFilter = true;
+    switch (filterOption) {
+      case "male":
+        matchesFilter = person.gender === "male";
+        break;
+      case "female":
+        matchesFilter = person.gender === "female";
+        break;
+      case "in_law_female":
+        matchesFilter = person.gender === "female" && person.is_in_law;
+        break;
+      case "in_law_male":
+        matchesFilter = person.gender === "male" && person.is_in_law;
+        break;
+      case "deceased":
+        matchesFilter = person.is_deceased;
+        break;
+      case "all":
+      default:
+        matchesFilter = true;
+        break;
+    }
+
+    return matchesSearch && matchesFilter;
+  });
+
+  const sortedPersons = [...filteredPersons].sort((a, b) => {
+    switch (sortOption) {
+      case "birth_asc":
+        return (a.birth_year || 9999) - (b.birth_year || 9999);
+      case "birth_desc":
+        return (b.birth_year || 0) - (a.birth_year || 0);
+      case "name_asc":
+        return a.full_name.localeCompare(b.full_name, "vi");
+      case "name_desc":
+        return b.full_name.localeCompare(a.full_name, "vi");
+      default:
+        return 0;
+    }
+  });
+
+  return (
+    <>
+      <div className="mb-8 relative">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/60 backdrop-blur-xl p-4 sm:p-5 rounded-2xl shadow-sm border border-stone-200/60 transition-all duration-300 relative z-10 w-full">
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto flex-1">
+            <div className="relative flex-1 max-w-sm group">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 group-focus-within:text-amber-500 transition-colors" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm thành viên..."
+                className="bg-white/90 text-stone-900 w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200/80 shadow-sm placeholder-stone-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20 transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+              <div className="relative">
+                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+                <select
+                  className="appearance-none bg-white/90 text-stone-700 w-full sm:w-40 pl-9 pr-8 py-2.5 rounded-xl border border-stone-200/80 shadow-sm focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20 hover:border-amber-300 font-medium text-sm transition-all focus:bg-white cursor-pointer"
+                  value={filterOption}
+                  onChange={(e) => setFilterOption(e.target.value)}
+                >
+                  <option value="all">Tất cả</option>
+                  <option value="male">Nam</option>
+                  <option value="female">Nữ</option>
+                  <option value="in_law_female">Dâu</option>
+                  <option value="in_law_male">Rể</option>
+                  <option value="deceased">Đã mất</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                  <svg
+                    className="w-4 h-4 text-stone-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    ></path>
+                  </svg>
+                </div>
+              </div>
+
+              <div className="relative">
+                <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+                <select
+                  className="appearance-none bg-white/90 text-stone-700 w-full sm:w-52 pl-9 pr-8 py-2.5 rounded-xl border border-stone-200/80 shadow-sm focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20 hover:border-amber-300 font-medium text-sm transition-all focus:bg-white cursor-pointer"
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
+                >
+                  <option value="birth_asc">Năm sinh (Tăng dần)</option>
+                  <option value="birth_desc">Năm sinh (Giảm dần)</option>
+                  <option value="name_asc">Tên (A-Z)</option>
+                  <option value="name_desc">Tên (Z-A)</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                  <svg
+                    className="w-4 h-4 text-stone-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    ></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/members/new"
+            className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-xl shadow-sm hover:shadow-md text-white bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 transition-all duration-300 hover:-translate-y-0.5 w-full sm:w-auto justify-center shrink-0"
+          >
+            <Plus className="w-4 h-4 mr-1.5" strokeWidth={2.5} />
+            Thêm thành viên
+          </Link>
+        </div>
+      </div>
+
+      {sortedPersons.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sortedPersons.map((person) => (
+            <PersonCard key={person.id} person={person} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12 text-stone-400 italic">
+          {initialPersons.length > 0
+            ? "Không tìm thấy thành viên phù hợp."
+            : "Chưa có thành viên nào. Hãy thêm thành viên đầu tiên."}
+        </div>
+      )}
+    </>
+  );
+}
