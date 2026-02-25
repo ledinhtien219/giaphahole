@@ -9,14 +9,17 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.8.0",
-    "@supabase/supabase-js": "^2.97.0",
-    "framer-motion": "^12.34.3",
-<<<<<<< HEAD
-    "html2canvas": "^1.4.1",
-    "jspdf": "^4.2.0",
-=======
->>>>>>> d7e181884826f3be5820e04d28e8a845a2972658
+  "@supabase/ssr": "^0.8.0",
+  "@supabase/supabase-js": "^2.97.0",
+  "framer-motion": "^12.34.3",
+  "html2canvas": "^1.4.1",
+  "jspdf": "^2.5.1",
+  "lucide-react": "^0.575.0",
+  "lunar-javascript": "^1.7.7",
+  "next": "16.1.6",
+  "react": "19.2.4",
+  "react-dom": "19.2.4"
+},
     "lucide-react": "^0.575.0",
     "lunar-javascript": "^1.7.7",
     "next": "16.1.6",
