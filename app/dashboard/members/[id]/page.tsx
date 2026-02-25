@@ -4,7 +4,10 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+<<<<<<< HEAD
 import ExportPdfButton from "@/components/ExportPdfButton";
+=======
+>>>>>>> d7e181884826f3be5820e04d28e8a845a2972658
 
 interface PageProps {
   params: Promise<{ id: string }>;

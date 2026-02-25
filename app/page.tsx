@@ -1,7 +1,10 @@
 import Footer from "@/components/Footer";
 import LandingHero from "@/components/LandingHero";
 import config from "./config";
+<<<<<<< HEAD
 import ExportPdfButton from "@/components/ExportPdfButton";
+=======
+>>>>>>> d7e181884826f3be5820e04d28e8a845a2972658
 
 export default function HomePage() {
   return (

@@ -29,11 +29,28 @@ async function exportTreePdfTiled(opts: ExportOpts = {}) {
   }
 
   const canvas = await html2canvas(el, {
-    backgroundColor: "#ffffff",
-    scale: Math.min(2, window.devicePixelRatio || 2),
-    useCORS: true,
-    logging: false,
-  });
+  backgroundColor: "#ffffff",
+  scale: 2,
+  useCORS: true,
+  logging: false,
+
+  onclone: (clonedDoc) => {
+    const all = clonedDoc.querySelectorAll("*");
+
+    all.forEach((node) => {
+      const style = window.getComputedStyle(node as Element);
+
+      // Nếu có màu dạng lab / oklch thì ép về màu thường
+      if (style.color?.includes("lab") || style.color?.includes("oklch")) {
+        (node as HTMLElement).style.color = "#000000";
+      }
+
+      if (style.backgroundColor?.includes("lab") || style.backgroundColor?.includes("oklch")) {
+        (node as HTMLElement).style.backgroundColor = "#ffffff";
+      }
+    });
+  },
+});
 
   const pdf = new jsPDF({ orientation, unit: "mm", format });
 

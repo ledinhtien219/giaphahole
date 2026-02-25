@@ -12,7 +12,10 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+<<<<<<< HEAD
 import ExportPdfButton from "@/components/ExportPdfButton";
+=======
+>>>>>>> d7e181884826f3be5820e04d28e8a845a2972658
 
 interface PageProps {
   searchParams: Promise<{ view?: string; rootId?: string }>;
@@ -110,8 +113,12 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
         {currentView !== "list" && persons.length > 0 && finalRootId && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2 w-full flex items-center justify-center gap-4">
             <RootSelector persons={persons} currentRootId={finalRootId} />
+<<<<<<< HEAD
 <AvatarToggle />
 {currentView === "tree" && <ExportPdfButton />}
+=======
+            <AvatarToggle />
+>>>>>>> d7e181884826f3be5820e04d28e8a845a2972658
           </div>
         )}
 
@@ -121,6 +128,7 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
           </div>
         )}
         {currentView === "tree" && (
+<<<<<<< HEAD
   <div id="tree-container" className="bg-white p-4">
     <FamilyTree
       personsMap={personsMap}
@@ -129,6 +137,14 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
     />
   </div>
 )}
+=======
+          <FamilyTree
+            personsMap={personsMap}
+            relationships={relationships}
+            roots={roots}
+          />
+        )}
+>>>>>>> d7e181884826f3be5820e04d28e8a845a2972658
         {currentView === "mindmap" && (
           <MindmapTree
             personsMap={personsMap}
